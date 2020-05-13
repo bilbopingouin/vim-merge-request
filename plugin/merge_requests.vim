@@ -8,9 +8,9 @@ let s:list_files=[]
 
 "--------------------------------------------
 " Display the stats of the merge request diff
-"-------------------------------------------
+"--------------------------------------------
 function! s:openSwapBuffer()
-  :new
+  :tabnew
   :setlocal buftype=nofile
   :setlocal bufhidden=hide
   :setlocal noswapfile
@@ -19,7 +19,7 @@ endfunction
 
 "--------------------------------------------
 " Set syntax
-"-------------------------------------------
+"--------------------------------------------
 " inspired by gv.vim
 function! s:syntax()
   setf merge_requests
@@ -49,21 +49,25 @@ endfunction
 
 "--------------------------------------------
 " Determine the commits that we will be working with
-"-------------------------------------------
+"--------------------------------------------
 function! merge_requests#initCommits(...)
   :let l:nbArgs = a:0
   if l:nbArgs > 0
     :let s:start_commit = a:1
     if l:nbArgs>1
       :let s:end_commit = a:2
+    else
+      :let s:end_commit = "HEAD"
     endif
+  else
+    :let s:start_commit = "master"
   endif
   :echo s:start_commit.' / '.s:end_commit
 endfunction
 
 "--------------------------------------------
 " Display the stats of the merge request diff
-"-------------------------------------------
+"--------------------------------------------
 function! merge_requests#showDiff(start,end)
   :call s:openSwapBuffer()
   :execute 'normal 0idiff '.a:start.'..'.a:end.':'
@@ -74,7 +78,7 @@ endfunction
 
 "--------------------------------------------
 " Wrapper for the diff
-"-------------------------------------------
+"--------------------------------------------
 function! merge_requests#showDiffWrapper(...)
   :call call('merge_requests#initCommits',a:000)  " a normal call would pack the a:000 list into another list
   :call merge_requests#listModFiles(s:start_commit,s:end_commit)
@@ -83,7 +87,7 @@ endfunction
 
 "--------------------------------------------
 " Get the list of affected files in the diff
-"-------------------------------------------
+"--------------------------------------------
 function! merge_requests#listFiles(start,end)
   :let l:list=systemlist('git diff --name-only '.a:start.'..'.a:end)
   ":echo l:list
@@ -92,7 +96,7 @@ endfunction
 
 "--------------------------------------------
 " Display the stats of the merge request diff
-"-------------------------------------------
+"--------------------------------------------
 function! merge_requests#listModFiles(start,end)
   :call merge_requests#listFiles(a:start,a:end)
   :call setqflist(map(s:list_files,{_, p -> {'filename': p}}),'r')
@@ -106,7 +110,7 @@ endfunction
 
 "--------------------------------------------
 " Open the two versions of the file
-"-------------------------------------------
+"--------------------------------------------
 " Requires fugitive
 function! merge_requests#openFileToDiff(start,end)
   :call merge_requests#listFiles(a:start,a:end)
@@ -127,8 +131,22 @@ function! merge_requests#openFileToDiff(start,end)
 endfunction
 
 "--------------------------------------------
+" Open the next file in the list
+"--------------------------------------------
+
+function! merge_requests#openNextFile()
+  :only
+  :cnext
+  :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
+endfunction
+
+"--------------------------------------------
 " Commands
 "-------------------------------------------
-:command! -nargs=* CRDiff :call merge_requests#showDiffWrapper(<f-args>)
+:command! -nargs=* CRDiff     :call merge_requests#showDiffWrapper(<f-args>)
 
 :command! -nargs=0 CRFileDiff :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
+
+:command! -nargs=0 CRNext     :call merge_requests#openNextFile()
+
+:command! -nargs=0 CRVersions :execute ':echo "git diff '.s:start_commit.'..'.s:end_commit.'"'
