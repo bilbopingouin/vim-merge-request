@@ -131,6 +131,15 @@ function! merge_requests#openFileToDiff(start,end)
 endfunction
 
 "--------------------------------------------
+" Open the first file in the list
+"--------------------------------------------
+function! merge_requests#openFirstFile()
+  :only
+  :crewind
+  :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
+endfunction
+
+"--------------------------------------------
 " Open the next file in the list
 "--------------------------------------------
 
@@ -143,10 +152,29 @@ endfunction
 "--------------------------------------------
 " Commands
 "-------------------------------------------
+  """
+  " Initiate a merge request review
+  """
 :command! -nargs=* CRDiff     :call merge_requests#showDiffWrapper(<f-args>)
 
+  """
+  " Compare the two versions of the current file
+  """
 :command! -nargs=0 CRFileDiff :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
 
+  """
+  " Show the diff of the first file in the quicklist
+  """
+:command! -nargs=0 CRFirst    :call merge_requests#openFirstFile()
+
+  """
+  " Pick the next differing file in the quicklist
+  """
 :command! -nargs=0 CRNext     :call merge_requests#openNextFile()
 
+  """
+  " Display the currently selected commits
+  """
 :command! -nargs=0 CRVersions :execute ':echo "git diff '.s:start_commit.'..'.s:end_commit.'"'
+
+

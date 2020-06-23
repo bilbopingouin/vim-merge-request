@@ -6,7 +6,9 @@ Utilities to facilitate the local code review for merge requests.
 
 Github and gitlab have nice tools to do some code reviewing for merge requests. However, why go to a browser, if one could stay at home in vim?
 
-## Commands
+## Usage
+
+### Commands
 
 This revolves around some simple commands: 
 
@@ -17,8 +19,20 @@ This revolves around some simple commands:
   - `:CRDiff`
   If not specified, it would take the default values (master and HEAD), but other commits could be specified (note that it does not require to be on of those commits).
 - `:CRFileDiff` after jumping to one of the file from the quicklist, it will call `:Gedit` and `:Gdiff` to display the vimdiff for the specific file. Note that for the two diffed commits, it will either use the default values, or the values used in the previous command.
+- `:CRFirst`, will call `:CRFileDiff` with the first file from the quicklist
 - `:CRNext`, will simply call `:CRFileDiff` with the next file from the quicklist.
 - `:CRVersions` prints the commits currently considered.
+
+### Typical workflow
+
+A typical workflow would look like
+
+```vim
+:CRDiff master branch   " will display a summary of the differences
+:CRFirst                " Shows a diff of the first file from the summary
+:CRNext                 " Next file
+:CRNext                 " Repeatedly until there are none more
+```
 
 ## Requirements
 
