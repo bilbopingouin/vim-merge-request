@@ -1,8 +1,8 @@
 "--------------------------------------------
 " Variables
 "-------------------------------------------
-let s:start_commit='master'
-let s:end_commit='HEAD'
+"let s:start_commit='master'
+"let s:end_commit='HEAD'
 let s:list_files=[]
 
 
@@ -27,7 +27,6 @@ function! s:syntax()
   syn clear
 
   syn match   mrInfo    /^diff\ .*:$/  contains=mrLabels nextgroup=mrFile
-  "syn match   mrLabels  /([a-fA-F0-9]\+|master|HEAD)/ contained
 
   syn match   mrFile      /^\ \+[^|]\+|\ *[0-9]\+\ *[+-]*$/ contains=mrSeparator,mrMods
   syn match   mrSeparator /|/       contained
@@ -62,18 +61,49 @@ function! merge_requests#initCommits(...)
   else
     :let s:start_commit = "master"
   endif
-  :echo s:start_commit.' / '.s:end_commit
+  ":echo s:start_commit.' / '.s:end_commit
+
+  :let s:three_ways = 0
+  if l:nbArgs>2
+    if '3' == a:3
+      :let s:three_ways = 1
+    endif
+  endif
 endfunction
 
 "--------------------------------------------
 " Display the stats of the merge request diff
 "--------------------------------------------
 function! merge_requests#showDiff(start,end)
-  :call s:openSwapBuffer()
-  :execute 'normal 0idiff '.a:start.'..'.a:end.':'
-  :execute ':r!git diff --stat '.a:start.'..'.a:end
-  :execute 'normal gg'
-  :call s:syntax()
+  if has('popupwin')
+    :call popup_dialog(['Statistics: '.a:start.'..'.a:end, '']+systemlist('git diff --stat '.a:start.'..'.a:end)+['', '[x] Close'], #{filter: 'popup_filter_yesno', callback: 'merge_requests#showList'}) 
+  else
+    :call s:openSwapBuffer()
+    :execute 'normal 0idiff '.a:start.'..'.a:end.':'
+    :execute ':r!git diff --stat '.a:start.'..'.a:end
+    :execute 'normal gg'
+    :call s:syntax()
+  endif
+endfunction
+
+"--------------------------------------------
+" Display the list of modified files
+"--------------------------------------------
+function! merge_requests#showList(id, result)
+  if has('popupwin')
+    :call popup_menu(systemlist('git diff --name-only '.s:start_commit.'..'.s:end_commit), #{title: 'Pick a file', callback: 'merge_requests#openPickedFile'})
+  else
+    :copen
+  endif
+endfunction
+
+"--------------------------------------------
+" Display the file indexed
+"--------------------------------------------
+function! merge_requests#openPickedFile(id, index)
+  :only
+  :execute 'cc '.a:index
+  :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
 endfunction
 
 "--------------------------------------------
@@ -90,7 +120,6 @@ endfunction
 "--------------------------------------------
 function! merge_requests#listFiles(start,end)
   :let l:list=systemlist('git diff --name-only '.a:start.'..'.a:end)
-  ":echo l:list
   :let s:list_files = copy(l:list)
 endfunction
 
@@ -100,12 +129,6 @@ endfunction
 function! merge_requests#listModFiles(start,end)
   :call merge_requests#listFiles(a:start,a:end)
   :call setqflist(map(s:list_files,{_, p -> {'filename': p}}),'r')
-  ":call setloclist(0,map(l:list,{_, p -> {'filename': p}}))
-  ":call setloclist(0,list)
-  ":lex list
-  ":lex map(l:list,{_, p-> {'filename': p}})
-  ":lopen
-  ":copen
 endfunction
 
 "--------------------------------------------
@@ -116,8 +139,6 @@ function! merge_requests#openFileToDiff(start,end)
   :call merge_requests#listFiles(a:start,a:end)
   let l:isInList=0
   for i in range(0,len(s:list_files)-1)
-    ":echo s:list_files[i]
-    ":echo s:list_files[i].' vs. '.expand('%:.')
     if s:list_files[i] == expand('%:.')
       :let l:isInList=1
       :break
@@ -127,6 +148,9 @@ function! merge_requests#openFileToDiff(start,end)
   if l:isInList==1
     :execute ':Gedit '.a:start.':%'
     :execute ':Gdiff '.a:end
+    if s:three_ways
+      :vert Gdiff HEAD
+    endif
   endif
 endfunction
 
@@ -173,8 +197,11 @@ endfunction
 :command! -nargs=0 CRNext     :call merge_requests#openNextFile()
 
   """
+  " Pick a file to review
+  """
+:command! -nargs=0 CRPick     :call merge_requests#showList(0,0)
+
+  """
   " Display the currently selected commits
   """
 :command! -nargs=0 CRVersions :execute ':echo "git diff '.s:start_commit.'..'.s:end_commit.'"'
-
-
