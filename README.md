@@ -17,10 +17,14 @@ This revolves around some simple commands:
   - `:CRDiff master HEAD`
   - `:CRDiff master`
   - `:CRDiff`
-  If not specified, it would take the default values (master and HEAD), but other commits could be specified (note that it does not require to be on of those commits).
+  If not specified, it would take the default values (master and HEAD), but other commits could be specified (note that it does not require to be on of those commits).  
+  Another option, is to call 
+  - `:CRDiff <hash-1> <hash-2> 3`
+  Activates a three-way display. The current version of the buffer will be displayed as well. This allows to modify it.
 - `:CRFileDiff` after jumping to one of the file from the quicklist, it will call `:Gedit` and `:Gdiff` to display the vimdiff for the specific file. Note that for the two diffed commits, it will either use the default values, or the values used in the previous command.
 - `:CRFirst`, will call `:CRFileDiff` with the first file from the quicklist
 - `:CRNext`, will simply call `:CRFileDiff` with the next file from the quicklist.
+- `:CRPick`, will display the list of files, which allows to pick the next file to be edited.
 - `:CRVersions` prints the commits currently considered.
 
 ### Typical workflow

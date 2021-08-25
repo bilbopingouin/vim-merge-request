@@ -145,19 +145,54 @@ function! merge_requests#openFileToDiff(start,end)
     endif
   endfor
 
+  :let l:fname = expand('%:.')
   if l:isInList==1
     :execute ':Gedit '.a:start.':%'
     :execute ':Gdiff '.a:end
     if s:three_ways
-      :vert Gdiff HEAD
+      :execute 'vert sb '.l:fname
+      :diffthis
     endif
   endif
+endfunction
+
+"--------------------------------------------
+" Open diffs of a given file using the defined hashes
+"--------------------------------------------
+function! merge_requests#testCommitsDefined()
+  :let l:unset=0
+
+  " Do we have a start commit?
+  if 0 == exists(s:start_commit)
+    :let s:start_commit = 'master'
+    :let l:unset=1
+  endif
+
+  " Do we have a end commit?
+  if 0 == exists(s:end_commit)
+    :let s:end_commit = 'HEAD'
+    :let l:unset=1
+  endif
+
+  " If we changed anything, we update the list
+  if l:unset
+    :call merge_requests#listModFiles(s:start_commit, s:end_commit)
+  endif
+endfunction
+
+"--------------------------------------------
+" Open diffs of a given file using the defined hashes
+"--------------------------------------------
+function! merge_requests#openFileDiffs()
+  :call merge_requests#testCommitsDefined()
+  :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
 endfunction
 
 "--------------------------------------------
 " Open the first file in the list
 "--------------------------------------------
 function! merge_requests#openFirstFile()
+  :call merge_requests#testCommitsDefined()
   :only
   :crewind
   :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
@@ -168,6 +203,7 @@ endfunction
 "--------------------------------------------
 
 function! merge_requests#openNextFile()
+  :call merge_requests#testCommitsDefined()
   :only
   :cnext
   :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
@@ -184,7 +220,7 @@ endfunction
   """
   " Compare the two versions of the current file
   """
-:command! -nargs=0 CRFileDiff :call merge_requests#openFileToDiff(s:start_commit,s:end_commit)
+:command! -nargs=0 CRFileDiff :call merge_requests#openFileDiffs()
 
   """
   " Show the diff of the first file in the quicklist
