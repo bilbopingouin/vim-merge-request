@@ -163,13 +163,13 @@ function! merge_requests#testCommitsDefined()
   :let l:unset=0
 
   " Do we have a start commit?
-  if 0 == exists(s:start_commit)
+  if 0 == exists('s:start_commit')
     :let s:start_commit = 'master'
     :let l:unset=1
   endif
 
   " Do we have a end commit?
-  if 0 == exists(s:end_commit)
+  if 0 == exists('s:end_commit')
     :let s:end_commit = 'HEAD'
     :let l:unset=1
   endif
